@@ -1,7 +1,3 @@
-// dependencies
-window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
-
 class Ingest{
   constructor(source, dest, time_key, settings){
     // source in is a function or url
@@ -13,22 +9,26 @@ class Ingest{
       this.source = source
     } else {
       this.source = function(){
-        return fetch(source).then(x=>x.json())
+        return fetch(source, {mode: "cors"}).then(x=>x.json())
       }
     }
     // time_key in where to find the time key, default to '_time'
     // each record is expected to have a unique time key, and they should order correctly
     this.time_key = time_key
-    // dest in is a indexedDB name
+    // dest in is a idb name
     // this.save is a function which takes in the record data and saves it
     this.dest = dest
-    // if time key is set, use it as key
-    let idb_opts = { keyPath: this.time_key }
-    if (! this.time_key){
-      idb_opts = {autoIncrement : true}
-    }
-    // if time key is not set, autoindex
-    this.db = indexedDB.open(this.dest).createObjectStore("records", idb_opts);
+    this.db = idb.openDb(this.dest, 1, x=>{
+      if (!x.objectStoreNames.contains('records')) {
+        let idb_opts = { keyPath: this.time_key }
+        // if time key is not set, autoindex
+        if (! this.time_key){
+          idb_opts = {autoIncrement : true}
+        }
+        let recordStore = x.createObjectStore("records", idb_opts);
+      }
+    })
+
     // SETTINGS
     this.settings = settings || {}
     this.frequency = this.settings.frequency || 5000
@@ -36,8 +36,16 @@ class Ingest{
     // whether or not to run _update on interval
     this.active = false
   }
-  save(record){
-    this.db.add(record)
+  save(records){
+    // if it's not an array, make it an array with one element for foreach
+    if (! records instanceof Array){
+      records = [records]
+    }
+    return this.db.then(x=>{
+      let tx = x.transaction('records', 'readwrite')
+      var store = tx.objectStore('records')
+      records.forEach(x=>store.add(x))
+    })
   }
   init(catch_up){
     // is catch up a nothing, a url, or function?
@@ -46,27 +54,27 @@ class Ingest{
     // if a url, then get it
     if (catch_up){
       if (catch_up instanceof Function){
-        catch_up().then(x=>x.forEach(this.save))
+        catch_up().then(this.save)
       } else {
-        fetch(catch_up).then(x=>x.json()).then(x=>x.forEach(this.save))
+        fetch(catch_up, {mode: "cors"}).then(x=>x.json()).then(this.save)
       }
     }
     this.active=true
     // every this.frequency, run update
-    window.setInterval(()=>{
+    window.setInterval(x=>{
       if (this.active){
         this._update()
       }
-    })
+    }, this.frequency)
   }
   _update(){
     // get the record
     this.source().then(record=>{
-      this.save(record)
-      // emit a "new record" event of some sort
-      var event = new CustomEvent('ingest', { data: record });
-      window.dispatchEvent(event)
+      this.save([record]).then(x=>{
+        // emit a "new record" event of some sort
+        var event = new CustomEvent('ingest', { data: record });
+        window.dispatchEvent(event)
+      })
     })
-
   }
 }
