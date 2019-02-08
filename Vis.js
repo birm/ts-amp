@@ -1,11 +1,12 @@
-// code for filtering visualizations
+// base code for filtering visualizations
 
 class Vis{
-  constructor(){
+  constructor(element){
+    this.attributes = pp.attributes
     this.type = "base_vis"
     this.html = ""
     this.filter_state = "{}"
-    this.element = document.createElement("div")
+    this.element = element
     this.element.classList.add("vis")
     // css for 1x1 grid?
     this.element.classList.add("h-1")
@@ -34,13 +35,4 @@ class Vis{
   }
 }
 
-class FilterVis extends Vis{
-  constuctor(){
-    super()
-    this.type = "base_filter_vis"
-    this.element.classList.add("filtering")
-  }
-  addFilter(filter_state){
-    // fire a filtering event to incorperate
-  }
-}
+export default Vis
