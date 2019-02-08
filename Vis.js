@@ -8,9 +8,8 @@ class Vis{
     this.filter_state = "{}"
     this.element = element
     this.element.classList.add("vis")
-    // css for 1x1 grid?
-    this.element.classList.add("h-1")
-    this.element.classList.add("w-1")
+    window.addEventListener("data", this.onData)
+    window.addEventListener("filter", this.onFilter)
     this.data = []
     // TODO listen for new data event
     // TODO listen for filter event
@@ -32,6 +31,10 @@ class Vis{
     this.filter_state = filter_state
     this.html = JSON.stringify(this.data) + JSON.stringify(this.filter_state)
     this.render()
+  }
+  filter(state){
+    var event = new CustomEvent('filter', { filter: state });
+    window.dispatchEvent(event)
   }
 }
 
