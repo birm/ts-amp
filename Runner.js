@@ -1,4 +1,4 @@
-require ../Vis.js as Vis
+import ../Vis.js as Vis
 // anything you add requiring vis
 var $NODE_TYPES = {}
 $NODE_TYPES.Vis = Vis
