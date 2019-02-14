@@ -2,15 +2,15 @@
 
 class Vis{
   constructor(element){
-    this.attributes = pp.attributes
+    this.dataArray = []
+    this.attributes = element.attributes
     this.type = "base_vis"
     this.html = ""
     this.filter_state = "{}"
     this.element = element
     this.element.classList.add("vis")
-    window.addEventListener("data", this.onData)
-    window.addEventListener("filter", this.onFilter)
-    this.data = []
+    window.addEventListener("data", {parent: this, handleEvent:this.onData})
+    window.addEventListener("filter", {parent: this, handleEvent:this.onFilter})
     // TODO listen for new data event
     // TODO listen for filter event
   }
@@ -18,24 +18,25 @@ class Vis{
   render(){
     this.element.innerHTML = this.html
   }
-  onData(data, fresh){
+  onData(event, fresh){
+    let self = this.parent || this
+    let data = event.detail
     if (fresh){
-      this.data = data
+      self.dataArray = data
     } else {
-      this.data.push(data)
+      self.dataArray.push(data)
     }
-    this.html = JSON.stringify(this.data) + JSON.stringify(this.filter_state)
-    this.render()
+    self.html = JSON.stringify(self.dataArray) + JSON.stringify(this.filter_state)
+    self.render()
   }
-  onFilter(filter_state){
-    this.filter_state = filter_state
-    this.html = JSON.stringify(this.data) + JSON.stringify(this.filter_state)
-    this.render()
+  onFilter(event){
+    let filter_state = event.detail
+    self.filter_state = filter_state
+    self.html = JSON.stringify(self.dataArray) + JSON.stringify(this.filter_state)
+    self.render()
   }
   filter(state){
     var event = new CustomEvent('filter', { filter: state });
     window.dispatchEvent(event)
   }
 }
-
-export default Vis

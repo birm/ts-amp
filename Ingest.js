@@ -72,9 +72,9 @@ class Ingest{
     this.source().then(record=>{
       this.save([record]).then(x=>{
         // emit a "new record" event of some sort
-        var event = new CustomEvent('ingest', { data: record });
+        var event = new CustomEvent('data', { detail: record });
         window.dispatchEvent(event)
-      })
+      }).catch(console.warn)
     })
   }
 }

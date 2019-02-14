@@ -1,0 +1,27 @@
+<html>
+<head>
+  <script src="deps/idb.js"></script>
+  <script src="Ingest.js"></script>
+  <script src="Read.js"></script>
+  <script src="Vis.js"></script>
+  <script>
+    let source = function(){
+        return new Promise((res, rej)=>{
+        let time = Date.now()
+        let random = Math.random()
+        console.log(random)
+        res({time: time, random: random})
+      })
+    }
+    let dest = "test1"
+    let time_key = "time"
+    var I = new Ingest(source, dest, time_key);
+    I.init();
+  </script>
+</head>
+<body>
+  <h1>Demo</h1>
+  <Vis></Vis>
+</body>
+<script src="Runner.js"></script>
+</html>
